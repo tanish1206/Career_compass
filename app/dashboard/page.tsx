@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import Card from '@/components/Card';
 import ProgressBar from '@/components/ProgressBar';
-import { defaultUserProfile, frontendRoadmap } from '@/lib/data';
+import { defaultUserProfile, frontendRoadmap, getUserProfile, getRoadmapProgress } from '@/lib/data';
 import { Target, BookOpen, FileText, TrendingUp, AlertCircle } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -13,17 +13,14 @@ export default function DashboardPage() {
   const [completedTopics, setCompletedTopics] = useState(0);
 
   useEffect(() => {
-    // Load user profile from localStorage
-    const stored = localStorage.getItem('userProfile');
-    if (stored) {
-      const data = JSON.parse(stored);
-      setUserProfile({ ...defaultUserProfile, ...data });
-    }
+    // Load user profile using storage helper
+    const profile = getUserProfile();
+    setUserProfile(profile);
 
-    // Load completed roadmap items
-    const roadmapData = localStorage.getItem('roadmapProgress');
+    // Load completed roadmap items using storage helper
+    const roadmapData = getRoadmapProgress();
     if (roadmapData) {
-      const completed = JSON.parse(roadmapData).filter((item: any) => item.completed).length;
+      const completed = roadmapData.filter((item) => item.completed).length;
       setCompletedTopics(completed);
     }
   }, []);
@@ -77,8 +74,8 @@ export default function DashboardPage() {
                     {userProfile.readinessScore >= 70
                       ? 'Great progress!'
                       : userProfile.readinessScore >= 50
-                      ? 'Keep going!'
-                      : 'Let\'s improve!'}
+                        ? 'Keep going!'
+                        : 'Let\'s improve!'}
                   </p>
                 </div>
               </div>

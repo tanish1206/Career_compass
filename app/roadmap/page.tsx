@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Card from '@/components/Card';
-import { frontendRoadmap, mockQuestions, RoadmapNode } from '@/lib/data';
+import { frontendRoadmap, mockQuestions, RoadmapNode, getRoadmapProgress, saveRoadmapProgress } from '@/lib/data';
 import { CheckCircle2, Circle, X } from 'lucide-react';
 
 export default function RoadmapPage() {
@@ -17,10 +17,10 @@ export default function RoadmapPage() {
   const [testScore, setTestScore] = useState(0);
 
   useEffect(() => {
-    // Load roadmap progress from localStorage
-    const stored = localStorage.getItem('roadmapProgress');
+    // Load roadmap progress using storage helper
+    const stored = getRoadmapProgress();
     if (stored) {
-      setRoadmapProgress(JSON.parse(stored));
+      setRoadmapProgress(stored);
     } else {
       setRoadmapProgress(frontendRoadmap);
     }
@@ -42,7 +42,7 @@ export default function RoadmapPage() {
         t.id === topicId ? { ...t, completed: false } : t
       );
       setRoadmapProgress(updated);
-      localStorage.setItem('roadmapProgress', JSON.stringify(updated));
+      saveRoadmapProgress(updated);
     }
   };
 
@@ -68,7 +68,7 @@ export default function RoadmapPage() {
         t.id === currentTopic ? { ...t, completed: true } : t
       );
       setRoadmapProgress(updated);
-      localStorage.setItem('roadmapProgress', JSON.stringify(updated));
+      saveRoadmapProgress(updated);
     }
   };
 
@@ -124,22 +124,20 @@ export default function RoadmapPage() {
               return (
                 <div key={node.id} className="animate-slide-up" style={{ animationDelay: `${idx * 0.1}s` }}>
                   <Card
-                    className={`${
-                      node.completed
+                    className={`${node.completed
                         ? 'border-green-500/50 bg-green-900/10'
                         : isLocked
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:border-blue-500/50'
-                    }`}
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'hover:border-blue-500/50'
+                      }`}
                   >
                     <div className="flex items-start gap-4">
                       {/* Checkbox */}
                       <button
                         onClick={() => !isLocked && handleTopicToggle(node.id)}
                         disabled={isLocked}
-                        className={`flex-shrink-0 mt-1 ${
-                          isLocked ? 'cursor-not-allowed' : 'cursor-pointer'
-                        }`}
+                        className={`flex-shrink-0 mt-1 ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'
+                          }`}
                       >
                         {node.completed ? (
                           <CheckCircle2 className="w-6 h-6 text-green-400" />
@@ -224,11 +222,10 @@ export default function RoadmapPage() {
                         {q.options.map((option, optIdx) => (
                           <label
                             key={optIdx}
-                            className={`block p-3 rounded-lg border cursor-pointer transition-all ${
-                              testAnswers[idx] === optIdx
+                            className={`block p-3 rounded-lg border cursor-pointer transition-all ${testAnswers[idx] === optIdx
                                 ? 'bg-blue-600/20 border-blue-500'
                                 : 'bg-[var(--background)] border-[var(--border)] hover:border-blue-500/50'
-                            }`}
+                              }`}
                           >
                             <input
                               type="radio"
@@ -260,9 +257,8 @@ export default function RoadmapPage() {
               ) : (
                 <div className="text-center py-8">
                   <div
-                    className={`text-6xl font-bold mb-4 ${
-                      testScore >= 70 ? 'text-green-400' : 'text-yellow-400'
-                    }`}
+                    className={`text-6xl font-bold mb-4 ${testScore >= 70 ? 'text-green-400' : 'text-yellow-400'
+                      }`}
                   >
                     {testScore}%
                   </div>
