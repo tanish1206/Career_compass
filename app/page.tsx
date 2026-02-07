@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Target, TrendingUp, BookOpen, Award, CheckCircle2, Zap, BarChart3, X } from 'lucide-react';
+import ScrambledText from '@/components/ScrambledText';
 
 export default function Home() {
   const router = useRouter();
@@ -144,21 +145,39 @@ export default function Home() {
         <div className="text-center max-w-4xl mx-auto animate-fade-in">
           {/* Logo/Title */}
           <div className="mb-8">
-            <h1 className="text-6xl md:text-7xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            <div className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+              <ScrambledText
+                className="text-6xl md:text-7xl font-bold mb-4 mx-auto"
+                radius={200}
+                duration={1}
+                scrambleChars="!@#$%^&*"
+                style={{
+                  margin: '0 auto',
+                  maxWidth: '100%',
+                }}
+              >
                 Career Compass
-              </span>
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-300">
+              </ScrambledText>
+            </div>
+            <ScrambledText
+              className="text-xl md:text-2xl text-gray-300 mx-auto"
+              radius={150}
+              duration={0.8}
+              scrambleChars="!@#$"
+            >
               Your AI-Powered Placement Preparation Partner
-            </p>
+            </ScrambledText>
           </div>
 
           {/* Value Proposition */}
-          <p className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Stop guessing what to learn next. Get a personalized roadmap, track your progress,
-            and know exactly how placement-ready you are—all in one place.
-          </p>
+          <ScrambledText
+            className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed"
+            radius={120}
+            duration={0.7}
+            scrambleChars="!@#$"
+          >
+            Stop guessing what to learn next. Get a personalized roadmap, track your progress, and know exactly how placement-ready you are—all in one place.
+          </ScrambledText>
 
           {/* CTA Button */}
           <button
@@ -248,11 +267,14 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-white mb-6">
             Built for Tier-2/3 College Students
           </h2>
-          <p className="text-gray-400 text-lg leading-relaxed mb-8">
-            We understand the challenges: lack of clarity on what to learn, no structure,
-            and zero feedback on your progress. Career Compass solves all three with
-            personalized roadmaps, structured learning paths, and AI-powered insights.
-          </p>
+          <ScrambledText
+            className="text-gray-400 text-lg leading-relaxed mb-8 mx-auto max-w-3xl"
+            radius={120}
+            duration={0.7}
+            scrambleChars="!@#$"
+          >
+            We understand the challenges: lack of clarity on what to learn, no structure, and zero feedback on your progress. Career Compass solves all three with personalized roadmaps, structured learning paths, and AI-powered insights.
+          </ScrambledText>
 
           {/* Benefits List */}
           <div className="grid md:grid-cols-2 gap-4 text-left mt-8">
@@ -304,7 +326,14 @@ function HowItWorksStep({
           {icon}
         </div>
         <h3 className="text-xl font-semibold text-white mb-3">{title}</h3>
-        <p className="text-gray-400 leading-relaxed">{description}</p>
+        <ScrambledText
+          className="text-gray-400 leading-relaxed"
+          radius={100}
+          duration={0.6}
+          scrambleChars="!@#"
+        >
+          {description}
+        </ScrambledText>
       </div>
     </div>
   );
@@ -325,7 +354,14 @@ function FeatureCard({
         {icon}
       </div>
       <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+      <ScrambledText
+        className="text-gray-400 text-sm leading-relaxed"
+        radius={80}
+        duration={0.5}
+        scrambleChars="!@#"
+      >
+        {description}
+      </ScrambledText>
     </div>
   );
 }
