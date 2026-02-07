@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Briefcase,
   Newspaper,
+  LogOut,
 } from 'lucide-react';
 
 const menuItems = [
@@ -54,9 +55,8 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-[var(--card)] border-r border-[var(--border)] z-40 transform transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 left-0 h-full w-64 bg-[var(--card)] border-r border-[var(--border)] z-40 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="p-6">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-8">
@@ -73,11 +73,10 @@ export default function Sidebar() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    isActive
-                      ? 'bg-blue-600/20 text-blue-400 border border-blue-600/30'
-                      : 'text-gray-300 hover:bg-[var(--card-hover)] hover:text-white'
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
+                    ? 'bg-blue-600/20 text-blue-400 border border-blue-600/30'
+                    : 'text-gray-300 hover:bg-[var(--card-hover)] hover:text-white'
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.name}</span>
@@ -87,17 +86,20 @@ export default function Sidebar() {
           </nav>
         </div>
 
-        {/* User Info */}
+        {/* Sign Out Button */}
         <div className="absolute bottom-0 w-full p-6 border-t border-[var(--border)]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold">
-              S
-            </div>
-            <div>
-              <p className="text-sm font-medium text-white">Student</p>
-              <p className="text-xs text-gray-400">Frontend Developer</p>
-            </div>
-          </div>
+          <button
+            onClick={() => {
+              // Clear all localStorage data
+              localStorage.clear();
+              // Redirect to landing page
+              window.location.href = '/';
+            }}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-red-600/10 text-red-400 border border-red-600/30 hover:bg-red-600/20 hover:border-red-600/50 transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="font-medium">Sign Out</span>
+          </button>
         </div>
       </aside>
     </>

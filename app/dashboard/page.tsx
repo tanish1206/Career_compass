@@ -1,27 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import Card from '@/components/Card';
 import ProgressBar from '@/components/ProgressBar';
-import { defaultUserProfile, frontendRoadmap, getUserProfile, getRoadmapProgress } from '@/lib/data';
-import { Target, BookOpen, FileText, TrendingUp, AlertCircle } from 'lucide-react';
+import { Target, TrendingUp, FileText, Award, BookOpen, AlertCircle } from 'lucide-react';
+import { frontendRoadmap, defaultUserProfile, UserProfile, RoadmapNode } from '@/lib/data';
 
 export default function DashboardPage() {
-  const [userProfile, setUserProfile] = useState(defaultUserProfile);
+  const [userProfile, setUserProfile] = useState<UserProfile>(defaultUserProfile);
   const [completedTopics, setCompletedTopics] = useState(0);
 
   useEffect(() => {
-    // Load user profile using storage helper
-    const profile = getUserProfile();
-    setUserProfile(profile);
+    // Load user profile from localStorage
+    const stored = localStorage.getItem('userProfile');
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        setUserProfile({ ...defaultUserProfile, ...data });
+      } catch (error) {
+        console.error('Error parsing user profile:', error);
+      }
+    }
 
-    // Load completed roadmap items using storage helper
-    const roadmapData = getRoadmapProgress();
+    // Load completed roadmap items from localStorage
+    const roadmapData = localStorage.getItem('roadmapProgress');
     if (roadmapData) {
-      const completed = roadmapData.filter((item) => item.completed).length;
-      setCompletedTopics(completed);
+      try {
+        const parsed: RoadmapNode[] = JSON.parse(roadmapData);
+        const completed = parsed.filter((item) => item.completed).length;
+        setCompletedTopics(completed);
+      } catch (error) {
+        console.error('Error parsing roadmap progress:', error);
+      }
     }
   }, []);
 

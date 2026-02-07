@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Card from '@/components/Card';
-import { frontendRoadmap, mockQuestions, RoadmapNode, getRoadmapProgress, saveRoadmapProgress } from '@/lib/data';
+import { frontendRoadmap, mockQuestions, RoadmapNode } from '@/lib/data';
 import { CheckCircle2, Circle, X, Globe, Code, Palette, Zap, GitBranch, Component } from 'lucide-react';
 
 // Topic icon mapping
@@ -27,10 +27,15 @@ export default function RoadmapPage() {
   const [testScore, setTestScore] = useState(0);
 
   useEffect(() => {
-    // Load roadmap progress using storage helper
-    const stored = getRoadmapProgress();
+    // Load roadmap progress from localStorage
+    const stored = localStorage.getItem('roadmapProgress');
     if (stored) {
-      setRoadmapProgress(stored);
+      try {
+        setRoadmapProgress(JSON.parse(stored));
+      } catch (error) {
+        console.error('Error parsing roadmap progress:', error);
+        setRoadmapProgress(frontendRoadmap);
+      }
     } else {
       setRoadmapProgress(frontendRoadmap);
     }
@@ -52,7 +57,7 @@ export default function RoadmapPage() {
         t.id === topicId ? { ...t, completed: false } : t
       );
       setRoadmapProgress(updated);
-      saveRoadmapProgress(updated);
+      localStorage.setItem('roadmapProgress', JSON.stringify(updated));
     }
   };
 
@@ -78,7 +83,7 @@ export default function RoadmapPage() {
         t.id === currentTopic ? { ...t, completed: true } : t
       );
       setRoadmapProgress(updated);
-      saveRoadmapProgress(updated);
+      localStorage.setItem('roadmapProgress', JSON.stringify(updated));
     }
   };
 
