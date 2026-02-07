@@ -48,7 +48,7 @@ export default function MockTestsPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar />
 
-      <main className="pl-0 md:pl-0 p-6 md:p-8">
+      <main className="p-6 md:p-8 pt-20 md:pt-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="mb-8 animate-fade-in">
@@ -93,9 +93,8 @@ export default function MockTestsPage() {
             <div className="animate-fade-in">
               <Card className="text-center py-12">
                 <div
-                  className={`text-6xl font-bold mb-6 ${
-                    score >= 70 ? 'text-green-400' : 'text-yellow-400'
-                  }`}
+                  className={`text-6xl font-bold mb-6 ${score >= 70 ? 'text-green-400' : 'text-yellow-400'
+                    }`}
                 >
                   {score}%
                 </div>
@@ -164,11 +163,10 @@ export default function MockTestsPage() {
                       {q.options.map((option, optIdx) => (
                         <label
                           key={optIdx}
-                          className={`block p-3 rounded-lg border cursor-pointer transition-all ${
-                            answers[idx] === optIdx
+                          className={`block p-3 rounded-lg border cursor-pointer transition-all ${answers[idx] === optIdx
                               ? 'bg-blue-600/20 border-blue-500'
                               : 'bg-[var(--background)] border-[var(--border)] hover:border-blue-500/50'
-                          }`}
+                            }`}
                         >
                           <input
                             type="radio"

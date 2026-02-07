@@ -5,7 +5,17 @@ import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Card from '@/components/Card';
 import { frontendRoadmap, mockQuestions, RoadmapNode, getRoadmapProgress, saveRoadmapProgress } from '@/lib/data';
-import { CheckCircle2, Circle, X } from 'lucide-react';
+import { CheckCircle2, Circle, X, Globe, Code, Palette, Zap, GitBranch, Component } from 'lucide-react';
+
+// Topic icon mapping
+const topicIcons: Record<string, React.ReactNode> = {
+  internet: <Globe className="w-6 h-6" />,
+  html: <Code className="w-6 h-6" />,
+  css: <Palette className="w-6 h-6" />,
+  javascript: <Zap className="w-6 h-6" />,
+  git: <GitBranch className="w-6 h-6" />,
+  react: <Component className="w-6 h-6" />,
+};
 
 export default function RoadmapPage() {
   const router = useRouter();
@@ -87,7 +97,7 @@ export default function RoadmapPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar />
 
-      <main className="pl-0 md:pl-0 p-6 md:p-8">
+      <main className="p-6 md:p-8 pt-20 md:pt-8">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="mb-8 animate-fade-in">
@@ -124,52 +134,60 @@ export default function RoadmapPage() {
               return (
                 <div key={node.id} className="animate-slide-up" style={{ animationDelay: `${idx * 0.1}s` }}>
                   <Card
-                    className={`${node.completed
-                        ? 'border-green-500/50 bg-green-900/10'
-                        : isLocked
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:border-blue-500/50'
+                    className={`transition-all ${node.completed
+                      ? 'border-green-500/50 bg-green-900/10'
+                      : isLocked
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10'
                       }`}
                   >
                     <div className="flex items-start gap-4">
-                      {/* Checkbox */}
-                      <button
-                        onClick={() => !isLocked && handleTopicToggle(node.id)}
-                        disabled={isLocked}
-                        className={`flex-shrink-0 mt-1 ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'
-                          }`}
-                      >
-                        {node.completed ? (
-                          <CheckCircle2 className="w-6 h-6 text-green-400" />
-                        ) : (
-                          <Circle className="w-6 h-6 text-gray-500" />
-                        )}
-                      </button>
+                      {/* Topic Icon */}
+                      <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${node.completed
+                        ? 'bg-green-600/20 text-green-400'
+                        : isLocked
+                          ? 'bg-gray-600/20 text-gray-500'
+                          : 'bg-blue-600/20 text-blue-400'
+                        }`}>
+                        {topicIcons[node.id] || <Code className="w-6 h-6" />}
+                      </div>
 
                       {/* Content */}
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-white mb-2">
-                          {node.title}
-                        </h3>
-                        <p className="text-gray-400 text-sm">{node.description}</p>
-                        {isLocked && (
-                          <p className="text-yellow-400 text-xs mt-2">
-                            🔒 Complete prerequisites first
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Status Badge */}
-                      <div className="flex-shrink-0">
-                        {node.completed ? (
-                          <span className="px-3 py-1 bg-green-600/20 text-green-400 text-xs rounded-full border border-green-600/30">
-                            Verified ✓
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 bg-gray-600/20 text-gray-400 text-xs rounded-full border border-gray-600/30">
-                            Not Started
-                          </span>
-                        )}
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <h3 className="text-xl font-semibold text-white">
+                            {node.title}
+                          </h3>
+                          {/* Checkbox */}
+                          <button
+                            onClick={() => !isLocked && handleTopicToggle(node.id)}
+                            disabled={isLocked}
+                            className={`flex-shrink-0 ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-110 transition-transform'
+                              }`}
+                          >
+                            {node.completed ? (
+                              <CheckCircle2 className="w-7 h-7 text-green-400" />
+                            ) : (
+                              <Circle className="w-7 h-7 text-gray-500" />
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-gray-400 text-sm mb-3">{node.description}</p>
+                        <div className="flex items-center gap-2">
+                          {node.completed ? (
+                            <span className="px-3 py-1 bg-green-600/20 text-green-400 text-xs rounded-full border border-green-600/30 font-medium">
+                              ✓ Verified
+                            </span>
+                          ) : isLocked ? (
+                            <span className="px-3 py-1 bg-yellow-600/20 text-yellow-400 text-xs rounded-full border border-yellow-600/30 font-medium">
+                              🔒 Locked
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 bg-blue-600/20 text-blue-400 text-xs rounded-full border border-blue-600/30 font-medium">
+                              Ready to Start
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -223,8 +241,8 @@ export default function RoadmapPage() {
                           <label
                             key={optIdx}
                             className={`block p-3 rounded-lg border cursor-pointer transition-all ${testAnswers[idx] === optIdx
-                                ? 'bg-blue-600/20 border-blue-500'
-                                : 'bg-[var(--background)] border-[var(--border)] hover:border-blue-500/50'
+                              ? 'bg-blue-600/20 border-blue-500'
+                              : 'bg-[var(--background)] border-[var(--border)] hover:border-blue-500/50'
                               }`}
                           >
                             <input

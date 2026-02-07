@@ -16,7 +16,7 @@ export default function NewsPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar />
 
-      <main className="pl-0 md:pl-0 p-6 md:p-8">
+      <main className="p-6 md:p-8 pt-20 md:pt-8">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="mb-8 animate-fade-in">
@@ -46,9 +46,8 @@ export default function NewsPage() {
                 {/* Category Badge */}
                 <div className="mb-3">
                   <span
-                    className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full border ${
-                      categoryColors[news.category]
-                    }`}
+                    className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full border ${categoryColors[news.category]
+                      }`}
                   >
                     <Tag className="w-3 h-3" />
                     {news.category}

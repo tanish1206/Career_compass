@@ -21,7 +21,7 @@ export default function ResourcesPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar />
 
-      <main className="pl-0 md:pl-0 p-6 md:p-8">
+      <main className="p-6 md:p-8 pt-20 md:pt-8">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="mb-8 animate-fade-in">

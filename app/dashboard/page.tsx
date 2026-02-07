@@ -42,7 +42,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar />
 
-      <main className="pl-0 md:pl-0 p-6 md:p-8">
+      <main className="p-6 md:p-8 pt-20 md:pt-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8 animate-fade-in">
@@ -57,26 +57,69 @@ export default function DashboardPage() {
           {/* Readiness Score - Highlight */}
           <div className="mb-8 animate-slide-up">
             <Card className="bg-gradient-to-br from-blue-900/40 to-cyan-900/40 border-blue-500/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-white mb-2">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex-1 text-center md:text-left">
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
                     Placement Readiness Score
                   </h2>
-                  <p className="text-gray-300 text-sm">
+                  <p className="text-gray-300 text-base mb-4">
                     Based on your skills, projects, and roadmap completion
                   </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                    {userProfile.readinessScore}%
+                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                    <span className="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full border border-blue-600/30">
+                      {completedTopics}/{totalTopics} Topics Complete
+                    </span>
+                    <span className="px-3 py-1 bg-cyan-600/20 text-cyan-300 text-sm rounded-full border border-cyan-600/30">
+                      {userProfile.projectsCompleted} Projects
+                    </span>
                   </div>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {userProfile.readinessScore >= 70
-                      ? 'Great progress!'
-                      : userProfile.readinessScore >= 50
-                        ? 'Keep going!'
-                        : 'Let\'s improve!'}
-                  </p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="relative">
+                    {/* Circular progress background */}
+                    <svg className="w-40 h-40 transform -rotate-90">
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r="70"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="none"
+                        className="text-gray-700"
+                      />
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r="70"
+                        stroke="url(#gradient)"
+                        strokeWidth="8"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 70}`}
+                        strokeDashoffset={`${2 * Math.PI * 70 * (1 - userProfile.readinessScore / 100)}`}
+                        className="transition-all duration-1000 ease-out"
+                      />
+                      <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#06b6d4" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    {/* Score text */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <div className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                        {userProfile.readinessScore}%
+                      </div>
+                      <p className="text-sm text-gray-400 mt-1">
+                        {userProfile.readinessScore >= 70
+                          ? 'Excellent!'
+                          : userProfile.readinessScore >= 50
+                            ? 'Keep going!'
+                            : 'Getting started'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -142,22 +185,41 @@ export default function DashboardPage() {
               <h3 className="text-xl font-semibold text-white mb-6">
                 Learning Roadmap
               </h3>
-              <div className="mb-4">
-                <ProgressBar
-                  label="Overall Completion"
-                  value={roadmapProgress}
-                  color="blue"
-                />
-              </div>
-              <p className="text-gray-400 text-sm mb-6">
-                You've completed {completedTopics} out of {totalTopics} topics
-              </p>
-              <Link
-                href="/roadmap"
-                className="inline-block w-full text-center bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
-              >
-                View Full Roadmap
-              </Link>
+              {completedTopics === 0 ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-600/20 flex items-center justify-center">
+                    <Target className="w-8 h-8 text-blue-400" />
+                  </div>
+                  <p className="text-gray-400 mb-4">
+                    You haven't started any topics yet
+                  </p>
+                  <Link
+                    href="/roadmap"
+                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg transition-colors font-medium"
+                  >
+                    Start Learning
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <ProgressBar
+                      label="Overall Completion"
+                      value={roadmapProgress}
+                      color="blue"
+                    />
+                  </div>
+                  <p className="text-gray-400 text-sm mb-6">
+                    You've completed {completedTopics} out of {totalTopics} topics
+                  </p>
+                  <Link
+                    href="/roadmap"
+                    className="inline-block w-full text-center bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+                  >
+                    View Full Roadmap
+                  </Link>
+                </>
+              )}
             </Card>
           </div>
 

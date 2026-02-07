@@ -10,7 +10,7 @@ export default function RankingPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar />
 
-      <main className="pl-0 md:pl-0 p-6 md:p-8">
+      <main className="p-6 md:p-8 pt-20 md:pt-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="mb-8 animate-fade-in">
@@ -116,13 +116,12 @@ export default function RankingPage() {
                   className="flex items-center gap-4 p-4 bg-[var(--background)] rounded-lg border border-[var(--border)]"
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                      idx === 0
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${idx === 0
                         ? 'bg-yellow-600 text-white'
                         : idx === 1
-                        ? 'bg-gray-400 text-white'
-                        : 'bg-orange-600 text-white'
-                    }`}
+                          ? 'bg-gray-400 text-white'
+                          : 'bg-orange-600 text-white'
+                      }`}
                   >
                     {idx + 1}
                   </div>
