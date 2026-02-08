@@ -3,18 +3,21 @@ import { editRoadmapWithAI } from '@/lib/ai';
 import { RoadmapNode } from '@/lib/data';
 
 // Simple test roadmap
+
+
 const TEST_ROADMAP: RoadmapNode[] = [
     {
-        id: 'test_topic',
-        title: 'Test Topic',
-        description: 'A test topic',
+        id: 'html',
+        title: 'HTML Basics',
+        description: 'Learn the structure of web pages',
+        category: 'fundamentals',   // ✅ MUST be one of allowed values
+        difficulty: 'easy',         // ✅ MUST be 'easy' | 'medium' | 'hard'
         completed: false,
-        position: { x: 50, y: 10 },
+        position: { x: 100, y: 200 },
         prerequisites: [],
-        category: 'fundamentals',
-        difficulty: 'easy'
-    }
+    },
 ];
+
 
 export async function GET(request: NextRequest) {
     try {
