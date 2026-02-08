@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { editRoadmapWithAI } from '@/lib/ai';
+import { RoadmapNode } from '@/lib/data';
 
 // Simple test roadmap
-const TEST_ROADMAP = [
+const TEST_ROADMAP: RoadmapNode[] = [
     {
         id: 'test_topic',
         title: 'Test Topic',
