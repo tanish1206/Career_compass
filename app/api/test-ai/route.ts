@@ -9,7 +9,9 @@ const TEST_ROADMAP = [
         description: 'A test topic',
         completed: false,
         position: { x: 50, y: 10 },
-        prerequisites: []
+        prerequisites: [],
+        category: 'fundamentals',
+        difficulty: 'easy'
     }
 ];
 
