@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, User, ArrowLeft, Eye } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -13,8 +13,17 @@ export default function SignupPage() {
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
+    // Clear demo mode flag for real users
+    localStorage.removeItem('demo_mode');
     // Mock signup - redirect to onboarding
     router.push('/onboarding');
+  };
+
+  const handleDemoMode = () => {
+    // Set demo mode flag in localStorage
+    localStorage.setItem('demo_mode', 'true');
+    // Redirect to dashboard
+    router.push('/dashboard');
   };
 
   return (
@@ -96,11 +105,34 @@ export default function SignupPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-cyan-700 transition-all transform hover:scale-[1.02]"
+              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-cyan-700 transition-colors"
             >
               Create Account
             </button>
           </form>
+
+          {/* Demo Mode Button */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-700"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-[var(--card)] text-gray-400">Or</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleDemoMode}
+              className="mt-6 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <Eye className="w-5 h-5" />
+              Try Demo Mode
+            </button>
+            <p className="text-center text-xs text-gray-500 mt-2">
+              Explore the app with pre-populated demo data
+            </p>
+          </div>
 
           {/* Login Link */}
           <div className="mt-6 text-center">

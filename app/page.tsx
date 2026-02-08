@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Target, TrendingUp, BookOpen, Award, CheckCircle2, Zap, BarChart3, X } from 'lucide-react';
+import { ArrowRight, Target, TrendingUp, BookOpen, Award, CheckCircle2, Zap, BarChart3, X, Eye } from 'lucide-react';
 import ScrambledText from '@/components/ScrambledText';
 import LiquidChrome from '@/components/LiquidChrome';
 
@@ -17,23 +17,47 @@ export default function Home() {
     domain: 'frontend' as 'frontend' | 'backend' | 'fullstack',
   });
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Clear demo mode for real users
+    localStorage.removeItem('demo_mode');
+
     if (isSignUp) {
-      // Sign Up: Save user data to localStorage
-      localStorage.setItem('userProfile', JSON.stringify({
-        name: formData.name,
-        email: formData.email,
-        domain: formData.domain,
-        skillLevels: { dsa: 50, coreCS: 60, frameworks: 40 },
-        projectsCompleted: 0,
-        placementTimeline: 90,
-        readinessScore: 45,
-      }));
+      // Sign Up: Create new user state
+      const newUserState = {
+        userId: `user-${Date.now()}`,
+        profile: {
+          name: formData.name,
+          email: formData.email,
+          role: formData.domain === 'frontend' ? 'Frontend Developer' :
+            formData.domain === 'backend' ? 'Backend Developer' : 'Full Stack Developer',
+          college: '',
+        },
+        skills: {
+          dsa: 0,
+          projects: 0,
+          fundamentals: 0,
+          softSkills: 0,
+        },
+        roadmap: {
+          topics: [],
+          source: 'default' as const,
+          lastUpdated: new Date().toISOString(),
+        },
+        projects: [],
+        mockTests: [],
+        metadata: {
+          createdAt: new Date().toISOString(),
+          lastActive: new Date().toISOString(),
+          version: '1.0',
+        },
+      };
+
+      localStorage.setItem('career_compass_user_state', JSON.stringify(newUserState));
     } else {
-      // Sign In: Just check if user exists (mock)
-      const existingUser = localStorage.getItem('userProfile');
+      // Sign In: Check if user exists
+      const existingUser = localStorage.getItem('career_compass_user_state');
       if (!existingUser) {
         alert('No account found. Please sign up first!');
         setIsSignUp(true);
@@ -41,6 +65,13 @@ export default function Home() {
       }
     }
 
+    // Redirect to dashboard
+    router.push('/dashboard');
+  };
+
+  const handleDemoMode = () => {
+    // Set demo mode flag
+    localStorage.setItem('demo_mode', 'true');
     // Redirect to dashboard
     router.push('/dashboard');
   };
@@ -150,6 +181,30 @@ export default function Home() {
                     ? 'Already have an account? Sign In'
                     : "Don't have an account? Sign Up"}
                 </button>
+              </div>
+
+              {/* Demo Mode Button */}
+              <div className="mt-6">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-700"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-[var(--card)] text-gray-400">Or</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleDemoMode}
+                  className="mt-6 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye className="w-5 h-5" />
+                  Try Demo Mode
+                </button>
+                <p className="text-center text-xs text-gray-500 mt-2">
+                  Explore the app with pre-populated demo data
+                </p>
               </div>
             </div>
           </div>

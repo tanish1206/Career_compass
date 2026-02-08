@@ -7,83 +7,28 @@ import Card from '@/components/Card';
 import ProgressBar from '@/components/ProgressBar';
 import { ParticleCard, GlobalSpotlight } from '@/components/MagicBento';
 import { Target, TrendingUp, FileText, Award, BookOpen, AlertCircle } from 'lucide-react';
-import { frontendRoadmap, defaultUserProfile, UserProfile, RoadmapNode } from '@/lib/data';
-import { getRoadmap } from '@/lib/supabase/roadmaps';
-import { getUserProfile } from '@/lib/supabase/profiles';
+import { getUserState, getDerivedMetrics } from '@/lib/userState';
+import { UserState, DerivedMetrics } from '@/lib/types/userState';
 
 export default function DashboardPage() {
-  const [userProfile, setUserProfile] = useState<UserProfile>(defaultUserProfile);
-  const [completedTopics, setCompletedTopics] = useState(0);
+  const [userState, setUserState] = useState<UserState | null>(null);
+  const [metrics, setMetrics] = useState<DerivedMetrics | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const statsGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadDashboardData() {
-      const demoUserId = 'demo-user-id';
-
-      // Load user profile
       try {
-        const supabaseProfile = await getUserProfile(demoUserId);
-        if (supabaseProfile) {
-          console.log('✅ Loaded profile from Supabase');
-          // Map Supabase profile to UserProfile format
-          setUserProfile({
-            ...defaultUserProfile,
-            email: supabaseProfile.email,
-            targetRole: supabaseProfile.target_domain || defaultUserProfile.targetRole,
-            skillLevels: supabaseProfile.skill_snapshot || defaultUserProfile.skillLevels,
-          });
-        } else {
-          // Fallback to localStorage
-          const stored = localStorage.getItem('userProfile');
-          if (stored) {
-            const data = JSON.parse(stored);
-            setUserProfile({ ...defaultUserProfile, ...data });
-            console.log('📦 Loaded profile from localStorage');
-          }
-        }
-      } catch (error) {
-        console.warn('Supabase unavailable for profile, using localStorage');
-        const stored = localStorage.getItem('userProfile');
-        if (stored) {
-          try {
-            const data = JSON.parse(stored);
-            setUserProfile({ ...defaultUserProfile, ...data });
-          } catch (e) {
-            console.error('Error parsing user profile:', e);
-          }
-        }
-      }
+        const state = await getUserState();
+        setUserState(state);
 
-      // Load roadmap progress
-      try {
-        const supabaseRoadmap = await getRoadmap(demoUserId);
-        if (supabaseRoadmap && supabaseRoadmap.length > 0) {
-          console.log('✅ Loaded progress from Supabase');
-          const completed = supabaseRoadmap.filter((item) => item.completed).length;
-          setCompletedTopics(completed);
-        } else {
-          // Fallback to localStorage
-          const roadmapData = localStorage.getItem('roadmapProgress');
-          if (roadmapData) {
-            const parsed: RoadmapNode[] = JSON.parse(roadmapData);
-            const completed = parsed.filter((item) => item.completed).length;
-            setCompletedTopics(completed);
-            console.log('📦 Loaded progress from localStorage');
-          }
-        }
+        const derivedMetrics = getDerivedMetrics(state);
+        setMetrics(derivedMetrics);
+
+        console.log('✅ Loaded user state from central data layer');
+        console.log('📊 Readiness Score:', derivedMetrics.readinessScore);
       } catch (error) {
-        console.warn('Supabase unavailable for progress, using localStorage');
-        const roadmapData = localStorage.getItem('roadmapProgress');
-        if (roadmapData) {
-          try {
-            const parsed: RoadmapNode[] = JSON.parse(roadmapData);
-            const completed = parsed.filter((item) => item.completed).length;
-            setCompletedTopics(completed);
-          } catch (e) {
-            console.error('Error parsing roadmap progress:', e);
-          }
-        }
+        console.error('Error loading dashboard data:', error);
       }
     }
 
@@ -101,18 +46,14 @@ export default function DashboardPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const totalTopics = frontendRoadmap.length;
-  const roadmapProgress = (completedTopics / totalTopics) * 100;
-
-  // Find weakest skill
-  const skills = [
-    { name: 'DSA', value: userProfile.skillLevels.dsa },
-    { name: 'Core CS', value: userProfile.skillLevels.coreCS },
-    { name: 'Frameworks', value: userProfile.skillLevels.frameworks },
-  ];
-  const weakestSkill = skills.reduce((prev, current) =>
-    prev.value < current.value ? prev : current
-  );
+  // Show loading state if data not loaded yet
+  if (!userState || !metrics) {
+    return (
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+        <div className="text-white text-xl">Loading dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
@@ -123,7 +64,7 @@ export default function DashboardPage() {
           {/* Header */}
           <div className="mb-8 animate-fade-in">
             <h1 className="text-3xl font-bold text-white mb-2">
-              Welcome back, {userProfile.name}! 👋
+              Welcome back, {userState.profile.name}! 👋
             </h1>
             <p className="text-gray-400">
               Here's your placement preparation progress
@@ -151,10 +92,10 @@ export default function DashboardPage() {
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                       <span className="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full border border-blue-600/30">
-                        {completedTopics}/{totalTopics} Topics Complete
+                        {metrics.completedTopicsCount}/{metrics.totalTopicsCount} Topics Complete
                       </span>
                       <span className="px-3 py-1 bg-cyan-600/20 text-cyan-300 text-sm rounded-full border border-cyan-600/30">
-                        {userProfile.projectsCompleted} Projects
+                        {metrics.completedProjectsCount} Projects
                       </span>
                     </div>
                   </div>
@@ -180,7 +121,7 @@ export default function DashboardPage() {
                           fill="none"
                           strokeLinecap="round"
                           strokeDasharray={`${2 * Math.PI * 70}`}
-                          strokeDashoffset={`${2 * Math.PI * 70 * (1 - userProfile.readinessScore / 100)}`}
+                          strokeDashoffset={`${2 * Math.PI * 70 * (1 - metrics.readinessScore / 100)}`}
                           className="transition-all duration-1000 ease-out"
                         />
                         <defs>
@@ -193,12 +134,12 @@ export default function DashboardPage() {
                       {/* Score text */}
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <div className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                          {userProfile.readinessScore}%
+                          {metrics.readinessScore}%
                         </div>
                         <p className="text-sm text-gray-400 mt-1">
-                          {userProfile.readinessScore >= 70
+                          {metrics.readinessScore >= 70
                             ? 'Excellent!'
-                            : userProfile.readinessScore >= 50
+                            : metrics.readinessScore >= 50
                               ? 'Keep going!'
                               : 'Getting started'}
                         </p>
@@ -222,25 +163,25 @@ export default function DashboardPage() {
             <StatCard
               icon={<Target className="w-6 h-6" />}
               label="Domain"
-              value={userProfile.domain}
+              value={userState.profile.role}
               color="blue"
             />
             <StatCard
               icon={<BookOpen className="w-6 h-6" />}
               label="Projects Completed"
-              value={userProfile.projectsCompleted}
+              value={metrics.completedProjectsCount}
               color="green"
             />
             <StatCard
               icon={<FileText className="w-6 h-6" />}
               label="Roadmap Progress"
-              value={`${completedTopics}/${totalTopics}`}
+              value={`${metrics.completedTopicsCount}/${metrics.totalTopicsCount}`}
               color="purple"
             />
             <StatCard
               icon={<TrendingUp className="w-6 h-6" />}
               label="Days to Placement"
-              value={userProfile.placementTimeline}
+              value={90} // TODO: Add placement timeline to UserState
               color="orange"
             />
           </div>
@@ -264,17 +205,17 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   <ProgressBar
                     label="Data Structures & Algorithms"
-                    value={userProfile.skillLevels.dsa}
+                    value={userState.skills.dsa}
                     color="blue"
                   />
                   <ProgressBar
                     label="Core CS Fundamentals"
-                    value={userProfile.skillLevels.coreCS}
+                    value={userState.skills.fundamentals}
                     color="green"
                   />
                   <ProgressBar
                     label="Frameworks & Tools"
-                    value={userProfile.skillLevels.frameworks}
+                    value={userState.skills.projects}
                     color="yellow"
                   />
                 </div>
@@ -294,7 +235,7 @@ export default function DashboardPage() {
                 <h3 className="text-xl font-semibold text-white mb-6">
                   Learning Roadmap
                 </h3>
-                {completedTopics === 0 ? (
+                {metrics.completedTopicsCount === 0 ? (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-600/20 flex items-center justify-center">
                       <Target className="w-8 h-8 text-blue-400" />
@@ -314,12 +255,12 @@ export default function DashboardPage() {
                     <div className="mb-4">
                       <ProgressBar
                         label="Overall Completion"
-                        value={roadmapProgress}
+                        value={metrics.roadmapProgress}
                         color="blue"
                       />
                     </div>
                     <p className="text-gray-400 text-sm mb-6">
-                      You've completed {completedTopics} out of {totalTopics} topics
+                      You've completed {metrics.completedTopicsCount} out of {metrics.totalTopicsCount} topics
                     </p>
                     <Link
                       href="/roadmap"
@@ -353,7 +294,7 @@ export default function DashboardPage() {
                       Focus Area
                     </h3>
                     <p className="text-gray-300 mb-3">
-                      Your weakest skill is <span className="font-semibold text-yellow-400">{weakestSkill.name}</span> at {weakestSkill.value}%
+                      Your weakest skill is <span className="font-semibold text-yellow-400">{metrics.weakestSkill.name}</span> at {metrics.weakestSkill.value}%
                     </p>
                     <Link
                       href="/resources"

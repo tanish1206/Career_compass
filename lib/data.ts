@@ -12,6 +12,8 @@ export interface RoadmapNode {
   completed: boolean;
   position: { x: number; y: number };
   prerequisites?: string[];
+  category: 'dsa' | 'projects' | 'fundamentals' | 'softSkills';
+  difficulty: 'easy' | 'medium' | 'hard';
 }
 
 export interface TestQuestion {
@@ -88,6 +90,8 @@ export const frontendRoadmap: RoadmapNode[] = [
     description: 'How the internet works, HTTP/HTTPS, DNS, Browsers',
     completed: false,
     position: { x: 50, y: 10 },
+    category: 'fundamentals',
+    difficulty: 'easy',
   },
   {
     id: 'html',
@@ -96,6 +100,8 @@ export const frontendRoadmap: RoadmapNode[] = [
     completed: false,
     position: { x: 50, y: 25 },
     prerequisites: ['internet'],
+    category: 'fundamentals',
+    difficulty: 'easy',
   },
   {
     id: 'css',
@@ -104,6 +110,8 @@ export const frontendRoadmap: RoadmapNode[] = [
     completed: false,
     position: { x: 50, y: 40 },
     prerequisites: ['html'],
+    category: 'fundamentals',
+    difficulty: 'medium',
   },
   {
     id: 'javascript',
@@ -112,6 +120,8 @@ export const frontendRoadmap: RoadmapNode[] = [
     completed: false,
     position: { x: 50, y: 55 },
     prerequisites: ['css'],
+    category: 'dsa',
+    difficulty: 'medium',
   },
   {
     id: 'git',
@@ -120,6 +130,8 @@ export const frontendRoadmap: RoadmapNode[] = [
     completed: false,
     position: { x: 50, y: 70 },
     prerequisites: ['javascript'],
+    category: 'fundamentals',
+    difficulty: 'easy',
   },
   {
     id: 'react',
@@ -128,6 +140,8 @@ export const frontendRoadmap: RoadmapNode[] = [
     completed: false,
     position: { x: 50, y: 85 },
     prerequisites: ['git'],
+    category: 'projects',
+    difficulty: 'hard',
   },
 ];
 
