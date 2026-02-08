@@ -92,7 +92,10 @@ export async function generatePersonalizedRoadmap(profile: {
     timelineWeeks: number;
 }): Promise<RoadmapNode[]> {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        console.log('🤖 Starting AI roadmap generation with profile:', profile);
+        console.log('🔑 API Key exists:', !!process.env.GEMINI_API_KEY);
+
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
         const userPrompt = `Generate a personalized placement preparation roadmap:
 
@@ -107,26 +110,29 @@ Timeline: ${profile.timelineWeeks} weeks
 
 Prioritize weak areas. Generate realistic roadmap.`;
 
-        const result = await model.generateContent([
-            ROADMAP_GENERATION_PROMPT,
-            userPrompt
-        ]);
+        console.log('📤 Sending request to Gemini AI...');
+        const result = await model.generateContent(
+            ROADMAP_GENERATION_PROMPT + '\n\n' + userPrompt
+        );
 
         const response = await result.response;
         const text = response.text();
+        console.log('📥 Received AI response:', text.substring(0, 200) + '...');
 
         // Clean response (remove markdown if present)
         const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
         const data = JSON.parse(cleanText);
+        console.log('✅ Parsed JSON successfully, roadmap nodes:', data.roadmap?.length);
 
         if (!validateRoadmap(data)) {
             throw new Error('Invalid roadmap structure from AI');
         }
 
+        console.log('✅ Validation passed, returning roadmap');
         return data.roadmap;
     } catch (error) {
-        console.error('AI roadmap generation failed:', error);
+        console.error('❌ AI roadmap generation failed:', error);
         throw error;
     }
 }
@@ -137,7 +143,10 @@ export async function editRoadmapWithAI(
     userMessage: string
 ): Promise<{ roadmap: RoadmapNode[]; explanation: string }> {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        console.log('💬 Chatbot edit request:', userMessage);
+        console.log('📋 Current roadmap nodes:', currentRoadmap.length);
+
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
         const userPrompt = `Current Roadmap:
 ${JSON.stringify(currentRoadmap, null, 2)}
@@ -146,13 +155,14 @@ User Request: "${userMessage}"
 
 Modify the roadmap accordingly. Return JSON with updated roadmap and brief explanation.`;
 
-        const result = await model.generateContent([
-            ROADMAP_EDIT_PROMPT,
-            userPrompt
-        ]);
+        console.log('📤 Sending edit request to Gemini AI...');
+        const result = await model.generateContent(
+            ROADMAP_EDIT_PROMPT + '\n\n' + userPrompt
+        );
 
         const response = await result.response;
         const text = response.text();
+        console.log('📥 Received edit response:', text.substring(0, 200) + '...');
 
         // Clean response
         const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -167,12 +177,13 @@ Modify the roadmap accordingly. Return JSON with updated roadmap and brief expla
             throw new Error('Missing explanation in AI response');
         }
 
+        console.log('✅ Edit successful:', data.explanation);
         return {
             roadmap: data.roadmap,
             explanation: data.explanation
         };
     } catch (error) {
-        console.error('AI roadmap edit failed:', error);
+        console.error('❌ AI roadmap edit failed:', error);
         throw error;
     }
 }
