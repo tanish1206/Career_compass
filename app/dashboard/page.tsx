@@ -7,34 +7,84 @@ import Card from '@/components/Card';
 import ProgressBar from '@/components/ProgressBar';
 import { Target, TrendingUp, FileText, Award, BookOpen, AlertCircle } from 'lucide-react';
 import { frontendRoadmap, defaultUserProfile, UserProfile, RoadmapNode } from '@/lib/data';
+import { getRoadmap } from '@/lib/supabase/roadmaps';
+import { getUserProfile } from '@/lib/supabase/profiles';
 
 export default function DashboardPage() {
   const [userProfile, setUserProfile] = useState<UserProfile>(defaultUserProfile);
   const [completedTopics, setCompletedTopics] = useState(0);
 
   useEffect(() => {
-    // Load user profile from localStorage
-    const stored = localStorage.getItem('userProfile');
-    if (stored) {
+    async function loadDashboardData() {
+      const demoUserId = 'demo-user-id';
+
+      // Load user profile
       try {
-        const data = JSON.parse(stored);
-        setUserProfile({ ...defaultUserProfile, ...data });
+        const supabaseProfile = await getUserProfile(demoUserId);
+        if (supabaseProfile) {
+          console.log('✅ Loaded profile from Supabase');
+          // Map Supabase profile to UserProfile format
+          setUserProfile({
+            ...defaultUserProfile,
+            email: supabaseProfile.email,
+            targetRole: supabaseProfile.target_domain || defaultUserProfile.targetRole,
+            skillLevels: supabaseProfile.skill_snapshot || defaultUserProfile.skillLevels,
+          });
+        } else {
+          // Fallback to localStorage
+          const stored = localStorage.getItem('userProfile');
+          if (stored) {
+            const data = JSON.parse(stored);
+            setUserProfile({ ...defaultUserProfile, ...data });
+            console.log('📦 Loaded profile from localStorage');
+          }
+        }
       } catch (error) {
-        console.error('Error parsing user profile:', error);
+        console.warn('Supabase unavailable for profile, using localStorage');
+        const stored = localStorage.getItem('userProfile');
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            setUserProfile({ ...defaultUserProfile, ...data });
+          } catch (e) {
+            console.error('Error parsing user profile:', e);
+          }
+        }
+      }
+
+      // Load roadmap progress
+      try {
+        const supabaseRoadmap = await getRoadmap(demoUserId);
+        if (supabaseRoadmap && supabaseRoadmap.length > 0) {
+          console.log('✅ Loaded progress from Supabase');
+          const completed = supabaseRoadmap.filter((item) => item.completed).length;
+          setCompletedTopics(completed);
+        } else {
+          // Fallback to localStorage
+          const roadmapData = localStorage.getItem('roadmapProgress');
+          if (roadmapData) {
+            const parsed: RoadmapNode[] = JSON.parse(roadmapData);
+            const completed = parsed.filter((item) => item.completed).length;
+            setCompletedTopics(completed);
+            console.log('📦 Loaded progress from localStorage');
+          }
+        }
+      } catch (error) {
+        console.warn('Supabase unavailable for progress, using localStorage');
+        const roadmapData = localStorage.getItem('roadmapProgress');
+        if (roadmapData) {
+          try {
+            const parsed: RoadmapNode[] = JSON.parse(roadmapData);
+            const completed = parsed.filter((item) => item.completed).length;
+            setCompletedTopics(completed);
+          } catch (e) {
+            console.error('Error parsing roadmap progress:', e);
+          }
+        }
       }
     }
 
-    // Load completed roadmap items from localStorage
-    const roadmapData = localStorage.getItem('roadmapProgress');
-    if (roadmapData) {
-      try {
-        const parsed: RoadmapNode[] = JSON.parse(roadmapData);
-        const completed = parsed.filter((item) => item.completed).length;
-        setCompletedTopics(completed);
-      } catch (error) {
-        console.error('Error parsing roadmap progress:', error);
-      }
-    }
+    loadDashboardData();
   }, []);
 
   const totalTopics = frontendRoadmap.length;

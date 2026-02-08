@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import Card from '@/components/Card';
 import RoadmapChatbot from '@/components/RoadmapChatbot';
 import { frontendRoadmap, mockQuestions, RoadmapNode } from '@/lib/data';
+import { getRoadmap, saveRoadmap } from '@/lib/supabase/roadmaps';
 import {
   CheckCircle2,
   Circle,
@@ -44,20 +45,45 @@ export default function RoadmapPage() {
 
   /* ----------------------------- Load progress ---------------------------- */
   useEffect(() => {
-    const stored = localStorage.getItem('roadmapProgress');
-    if (stored) {
+    async function loadRoadmap() {
+      // For demo mode, use a fixed demo user ID
+      // In production, this would come from auth
+      const demoUserId = 'demo-user-id';
+
       try {
-        setRoadmapProgress(JSON.parse(stored));
-      } catch {
-        setRoadmapProgress(frontendRoadmap);
+        // Try Supabase first
+        const supabaseRoadmap = await getRoadmap(demoUserId);
+
+        if (supabaseRoadmap && supabaseRoadmap.length > 0) {
+          console.log('✅ Loaded roadmap from Supabase');
+          setRoadmapProgress(supabaseRoadmap);
+          return;
+        }
+      } catch (error) {
+        console.warn('Supabase unavailable, using localStorage fallback');
       }
-    } else {
-      setRoadmapProgress(frontendRoadmap);
+
+      // Fallback to localStorage
+      const stored = localStorage.getItem('roadmapProgress');
+      if (stored) {
+        try {
+          setRoadmapProgress(JSON.parse(stored));
+          console.log('📦 Loaded roadmap from localStorage');
+        } catch {
+          setRoadmapProgress(frontendRoadmap);
+          console.log('🎨 Using default roadmap');
+        }
+      } else {
+        setRoadmapProgress(frontendRoadmap);
+        console.log('🎨 Using default roadmap');
+      }
     }
+
+    loadRoadmap();
   }, []);
 
   /* ---------------------------- Topic handling ---------------------------- */
-  const handleTopicToggle = (topicId: string) => {
+  const handleTopicToggle = async (topicId: string) => {
     const topic = roadmapProgress.find(t => t.id === topicId);
     if (!topic) return;
 
@@ -71,7 +97,18 @@ export default function RoadmapPage() {
         t.id === topicId ? { ...t, completed: false } : t
       );
       setRoadmapProgress(updated);
+
+      // Save to localStorage
       localStorage.setItem('roadmapProgress', JSON.stringify(updated));
+
+      // Save to Supabase
+      const demoUserId = 'demo-user-id';
+      try {
+        await saveRoadmap(demoUserId, updated, 'system', 'Frontend Developer');
+        console.log('✅ Saved progress to Supabase');
+      } catch (error) {
+        console.warn('Failed to save to Supabase, localStorage backup exists');
+      }
     }
   };
 
@@ -111,6 +148,8 @@ export default function RoadmapPage() {
   /* -------------------------- AI Roadmap Handlers ------------------------- */
   const handleGenerateRoadmap = async (profile: any) => {
     setIsGenerating(true);
+    const demoUserId = 'demo-user-id';
+
     try {
       const response = await fetch('/api/roadmap/generate', {
         method: 'POST',
@@ -124,8 +163,25 @@ export default function RoadmapPage() {
         setToastMessage(data.message);
       }
 
+      // Update state
       setRoadmapProgress(data.roadmap);
+
+      // Save to localStorage (fallback)
       localStorage.setItem('roadmapProgress', JSON.stringify(data.roadmap));
+
+      // Save to Supabase (primary storage)
+      try {
+        await saveRoadmap(
+          demoUserId,
+          data.roadmap,
+          data.fallback ? 'system' : 'ai',  // Track if AI-generated
+          profile.role || 'Frontend Developer'
+        );
+        console.log('✅ Saved roadmap to Supabase');
+      } catch (error) {
+        console.warn('Failed to save to Supabase, localStorage backup exists');
+      }
+
       setShowGenerateModal(false);
       setToastMessage('✓ Roadmap generated successfully!');
     } catch (error) {
@@ -137,9 +193,28 @@ export default function RoadmapPage() {
     }
   };
 
-  const handleRoadmapUpdate = (roadmap: RoadmapNode[], explanation: string) => {
+  const handleRoadmapUpdate = async (roadmap: RoadmapNode[], explanation: string) => {
+    const demoUserId = 'demo-user-id';
+
+    // Update state
     setRoadmapProgress(roadmap);
+
+    // Save to localStorage (fallback)
     localStorage.setItem('roadmapProgress', JSON.stringify(roadmap));
+
+    // Save to Supabase (primary storage)
+    try {
+      await saveRoadmap(
+        demoUserId,
+        roadmap,
+        'ai',  // Chatbot edits are AI-generated
+        'Frontend Developer'
+      );
+      console.log('✅ Saved updated roadmap to Supabase');
+    } catch (error) {
+      console.warn('Failed to save to Supabase, localStorage backup exists');
+    }
+
     setToastMessage(`✓ ${explanation}`);
     setTimeout(() => setToastMessage(null), 3000);
   };
