@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Card from '@/components/Card';
+import { ParticleCard, GlobalSpotlight } from '@/components/MagicBento';
 import { mockQuestions } from '@/lib/data';
 import { FileText, CheckCircle } from 'lucide-react';
 
@@ -11,6 +12,19 @@ export default function MockTestsPage() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const topicGridRef = useRef<HTMLDivElement>(null);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const topics = Object.keys(mockQuestions);
   const currentQuestions = selectedTopic ? mockQuestions[selectedTopic] : [];
@@ -60,68 +74,93 @@ export default function MockTestsPage() {
 
           {!selectedTopic ? (
             // Topic Selection
-            <div className="grid md:grid-cols-2 gap-4">
+            <div ref={topicGridRef} className="grid md:grid-cols-2 gap-4 relative bento-section">
+              <GlobalSpotlight
+                gridRef={topicGridRef}
+                enabled={!isMobile}
+                spotlightRadius={200}
+                glowColor="59, 130, 246"
+                disableAnimations={isMobile}
+              />
               {topics.map((topic, idx) => (
-                <Card
+                <ParticleCard
                   key={topic}
-                  hover
-                  className="animate-slide-up"
-                  style={{ animationDelay: `${idx * 0.1}s` }}
+                  disableAnimations={isMobile}
+                  particleCount={10}
+                  enableTilt={false}
+                  clickEffect={true}
+                  enableMagnetism={true}
+                  glowColor="59, 130, 246"
                 >
-                  <button
-                    onClick={() => handleStartTest(topic)}
-                    className="w-full text-left"
+                  <Card
+                    hover
+                    className="animate-slide-up"
+                    style={{ animationDelay: `${idx * 0.1}s` }}
                   >
-                    <div className="flex items-center gap-3 mb-3">
-                      <FileText className="w-6 h-6 text-blue-400" />
-                      <h3 className="text-xl font-semibold text-white capitalize">
-                        {topic === 'javascript' ? 'JavaScript' : topic}
-                      </h3>
-                    </div>
-                    <p className="text-gray-400 text-sm mb-3">
-                      {mockQuestions[topic].length} questions • Easy to Medium
-                    </p>
-                    <div className="text-blue-400 font-medium text-sm">
-                      Start Test →
-                    </div>
-                  </button>
-                </Card>
+                    <button
+                      onClick={() => handleStartTest(topic)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <FileText className="w-6 h-6 text-blue-400" />
+                        <h3 className="text-xl font-semibold text-white capitalize">
+                          {topic === 'javascript' ? 'JavaScript' : topic}
+                        </h3>
+                      </div>
+                      <p className="text-gray-400 text-sm mb-3">
+                        {mockQuestions[topic].length} questions • Easy to Medium
+                      </p>
+                      <div className="text-blue-400 font-medium text-sm">
+                        Start Test →
+                      </div>
+                    </button>
+                  </Card>
+                </ParticleCard>
               ))}
             </div>
           ) : showResults ? (
             // Results View
             <div className="animate-fade-in">
-              <Card className="text-center py-12">
-                <div
-                  className={`text-6xl font-bold mb-6 ${score >= 70 ? 'text-green-400' : 'text-yellow-400'
-                    }`}
-                >
-                  {score}%
-                </div>
-                <h2 className="text-2xl font-bold text-white mb-3">
-                  {score >= 70 ? 'Great Job! 🎉' : 'Keep Practicing! 📚'}
-                </h2>
-                <p className="text-gray-400 mb-8">
-                  You got {Math.round((score / 100) * currentQuestions.length)} out of{' '}
-                  {currentQuestions.length} questions correct
-                </p>
+              <ParticleCard
+                disableAnimations={isMobile}
+                particleCount={8}
+                enableTilt={false}
+                clickEffect={true}
+                enableMagnetism={true}
+                glowColor="59, 130, 246"
+              >
+                <Card className="text-center py-12">
+                  <div
+                    className={`text-6xl font-bold mb-6 ${score >= 70 ? 'text-green-400' : 'text-yellow-400'
+                      }`}
+                  >
+                    {score}%
+                  </div>
+                  <h2 className="text-2xl font-bold text-white mb-3">
+                    {score >= 70 ? 'Great Job! 🎉' : 'Keep Practicing! 📚'}
+                  </h2>
+                  <p className="text-gray-400 mb-8">
+                    You got {Math.round((score / 100) * currentQuestions.length)} out of{' '}
+                    {currentQuestions.length} questions correct
+                  </p>
 
-                {/* Action Buttons */}
-                <div className="flex gap-4 justify-center">
-                  <button
-                    onClick={handleRetry}
-                    className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg font-medium transition-colors"
-                  >
-                    Retry Test
-                  </button>
-                  <button
-                    onClick={handleBack}
-                    className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-6 rounded-lg font-medium transition-colors"
-                  >
-                    Back to Topics
-                  </button>
-                </div>
-              </Card>
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 justify-center">
+                    <button
+                      onClick={handleRetry}
+                      className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg font-medium transition-colors"
+                    >
+                      Retry Test
+                    </button>
+                    <button
+                      onClick={handleBack}
+                      className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-6 rounded-lg font-medium transition-colors"
+                    >
+                      Back to Topics
+                    </button>
+                  </div>
+                </Card>
+              </ParticleCard>
             </div>
           ) : (
             // Test Questions
@@ -134,56 +173,75 @@ export default function MockTestsPage() {
                 >
                   ← Back to Topics
                 </button>
-                <Card>
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold text-white capitalize">
-                      {selectedTopic === 'javascript' ? 'JavaScript' : selectedTopic} Test
-                    </h2>
-                    <span className="text-gray-400 text-sm">
-                      {answers.length}/{currentQuestions.length} answered
-                    </span>
-                  </div>
-                </Card>
+                <ParticleCard
+                  disableAnimations={isMobile}
+                  particleCount={8}
+                  enableTilt={false}
+                  clickEffect={true}
+                  enableMagnetism={true}
+                  glowColor="59, 130, 246"
+                >
+                  <Card>
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-xl font-semibold text-white capitalize">
+                        {selectedTopic === 'javascript' ? 'JavaScript' : selectedTopic} Test
+                      </h2>
+                      <span className="text-gray-400 text-sm">
+                        {answers.length}/{currentQuestions.length} answered
+                      </span>
+                    </div>
+                  </Card>
+                </ParticleCard>
               </div>
 
               {/* Questions */}
               <div className="space-y-6">
                 {currentQuestions.map((q, idx) => (
-                  <Card key={q.id}>
-                    <div className="mb-4">
-                      <div className="flex items-start gap-3 mb-3">
-                        <span className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                          {idx + 1}
-                        </span>
-                        <p className="text-white font-medium flex-1">{q.question}</p>
+                  <ParticleCard
+                    key={q.id}
+                    disableAnimations={isMobile}
+                    particleCount={6}
+                    enableTilt={false}
+                    clickEffect={true}
+                    enableMagnetism={true}
+                    glowColor="59, 130, 246"
+                  >
+                    <Card>
+                      <div className="mb-4">
+                        <div className="flex items-start gap-3 mb-3">
+                          <span className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                            {idx + 1}
+                          </span>
+                          <p className="text-white font-medium flex-1">{q.question}</p>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-2 ml-11">
-                      {q.options.map((option, optIdx) => (
-                        <label
-                          key={optIdx}
-                          className={`block p-3 rounded-lg border cursor-pointer transition-all ${answers[idx] === optIdx
+                      <div className="space-y-2 ml-11">
+                        {q.options.map((option, optIdx) => (
+                          <label
+                            key={optIdx}
+                            className={`block p-3 rounded-lg border cursor-pointer transition-all ${answers[idx] === optIdx
                               ? 'bg-blue-600/20 border-blue-500'
                               : 'bg-[var(--background)] border-[var(--border)] hover:border-blue-500/50'
-                            }`}
-                        >
-                          <input
-                            type="radio"
-                            name={`question-${idx}`}
-                            checked={answers[idx] === optIdx}
-                            onChange={() => {
-                              const newAnswers = [...answers];
-                              newAnswers[idx] = optIdx;
-                              setAnswers(newAnswers);
-                            }}
-                            className="mr-3"
-                          />
-                          <span className="text-gray-300">{option}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </Card>
+                              }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`question-${idx}`}
+                              checked={answers[idx] === optIdx}
+                              onChange={() => {
+                                const newAnswers = [...answers];
+                                newAnswers[idx] = optIdx;
+                                setAnswers(newAnswers);
+                              }}
+                              className="mr-3"
+                            />
+                            <span className="text-gray-300">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </Card>
+                  </ParticleCard>
                 ))}
               </div>
 

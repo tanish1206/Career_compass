@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Card from '@/components/Card';
+import { ParticleCard, GlobalSpotlight } from '@/components/MagicBento';
 import RoadmapChatbot from '@/components/RoadmapChatbot';
 import { frontendRoadmap, mockQuestions, RoadmapNode } from '@/lib/data';
 import { getRoadmap, saveRoadmap } from '@/lib/supabase/roadmaps';
@@ -42,6 +43,8 @@ export default function RoadmapPage() {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const goalsGridRef = useRef<HTMLDivElement>(null);
 
   /* ----------------------------- Load progress ---------------------------- */
   useEffect(() => {
@@ -80,6 +83,17 @@ export default function RoadmapPage() {
     }
 
     loadRoadmap();
+  }, []);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   /* ---------------------------- Topic handling ---------------------------- */
@@ -262,24 +276,49 @@ export default function RoadmapPage() {
           </div>
 
           {/* ================= WEEKLY + PRIORITIES ================= */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <h3 className="text-xl font-bold text-white mb-4">Weekly Goals</h3>
-              <ul className="space-y-3 text-gray-300 text-sm">
-                <li>• Build DSA foundations (arrays, strings, hashing)</li>
-                <li>• Strengthen SQL + OS + Networking basics</li>
-                <li>• Start one deployable full-stack project</li>
-              </ul>
-            </Card>
+          <div ref={goalsGridRef} className="grid md:grid-cols-2 gap-6 relative bento-section">
+            <GlobalSpotlight
+              gridRef={goalsGridRef}
+              enabled={!isMobile}
+              spotlightRadius={200}
+              glowColor="59, 130, 246"
+              disableAnimations={isMobile}
+            />
+            <ParticleCard
+              disableAnimations={isMobile}
+              particleCount={8}
+              enableTilt={false}
+              clickEffect={true}
+              enableMagnetism={true}
+              glowColor="59, 130, 246"
+            >
+              <Card>
+                <h3 className="text-xl font-bold text-white mb-4">Weekly Goals</h3>
+                <ul className="space-y-3 text-gray-300 text-sm">
+                  <li>• Build DSA foundations (arrays, strings, hashing)</li>
+                  <li>• Strengthen SQL + OS + Networking basics</li>
+                  <li>• Start one deployable full-stack project</li>
+                </ul>
+              </Card>
+            </ParticleCard>
 
-            <Card>
-              <h3 className="text-xl font-bold text-white mb-4">Key Priorities</h3>
-              <ul className="space-y-3 text-gray-300 text-sm">
-                <li>✔ Pattern-based DSA practice (6/day)</li>
-                <li>✔ Clean notes + flashcards</li>
-                <li>✔ One high-quality deployable project</li>
-              </ul>
-            </Card>
+            <ParticleCard
+              disableAnimations={isMobile}
+              particleCount={8}
+              enableTilt={false}
+              clickEffect={true}
+              enableMagnetism={true}
+              glowColor="59, 130, 246"
+            >
+              <Card>
+                <h3 className="text-xl font-bold text-white mb-4">Key Priorities</h3>
+                <ul className="space-y-3 text-gray-300 text-sm">
+                  <li>✔ Pattern-based DSA practice (6/day)</li>
+                  <li>✔ Clean notes + flashcards</li>
+                  <li>✔ One high-quality deployable project</li>
+                </ul>
+              </Card>
+            </ParticleCard>
           </div>
 
           {/* ================= DAY BY DAY PLAN ================= */}
@@ -293,66 +332,75 @@ export default function RoadmapPage() {
                 );
 
               return (
-                <Card
+                <ParticleCard
                   key={node.id}
-                  className={`transition-all ${node.completed
-                    ? 'border-green-500/40 bg-green-900/10'
-                    : isLocked
-                      ? 'opacity-50'
-                      : 'hover:border-blue-500/40'
-                    }`}
+                  disableAnimations={isMobile}
+                  particleCount={10}
+                  enableTilt={false}
+                  clickEffect={true}
+                  enableMagnetism={true}
+                  glowColor="59, 130, 246"
                 >
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${node.completed
-                        ? 'bg-green-600/20 text-green-400'
-                        : isLocked
-                          ? 'bg-gray-600/20 text-gray-500'
-                          : 'bg-blue-600/20 text-blue-400'
-                        }`}
-                    >
-                      {topicIcons[node.id] || <Code className="w-6 h-6" />}
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-lg font-semibold text-white">
-                          D{idx + 1}: {node.title}
-                        </h3>
-
-                        <button
-                          disabled={isLocked}
-                          onClick={() => !isLocked && handleTopicToggle(node.id)}
-                        >
-                          {node.completed ? (
-                            <CheckCircle2 className="w-6 h-6 text-green-400" />
-                          ) : (
-                            <Circle className="w-6 h-6 text-gray-500" />
-                          )}
-                        </button>
-                      </div>
-
-                      <p className="text-gray-400 text-sm mb-3">
-                        {node.description}
-                      </p>
-
-                      <span
-                        className={`px-3 py-1 text-xs rounded-full border font-medium ${node.completed
-                          ? 'bg-green-600/20 text-green-400 border-green-600/30'
+                  <Card
+                    className={`transition-all ${node.completed
+                      ? 'border-green-500/40 bg-green-900/10'
+                      : isLocked
+                        ? 'opacity-50'
+                        : 'hover:border-blue-500/40'
+                      }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center ${node.completed
+                          ? 'bg-green-600/20 text-green-400'
                           : isLocked
-                            ? 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30'
-                            : 'bg-blue-600/20 text-blue-400 border-blue-600/30'
+                            ? 'bg-gray-600/20 text-gray-500'
+                            : 'bg-blue-600/20 text-blue-400'
                           }`}
                       >
-                        {node.completed
-                          ? '✓ Verified'
-                          : isLocked
-                            ? '🔒 Locked'
-                            : 'Ready to Start'}
-                      </span>
+                        {topicIcons[node.id] || <Code className="w-6 h-6" />}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-lg font-semibold text-white">
+                            D{idx + 1}: {node.title}
+                          </h3>
+
+                          <button
+                            disabled={isLocked}
+                            onClick={() => !isLocked && handleTopicToggle(node.id)}
+                          >
+                            {node.completed ? (
+                              <CheckCircle2 className="w-6 h-6 text-green-400" />
+                            ) : (
+                              <Circle className="w-6 h-6 text-gray-500" />
+                            )}
+                          </button>
+                        </div>
+
+                        <p className="text-gray-400 text-sm mb-3">
+                          {node.description}
+                        </p>
+
+                        <span
+                          className={`px-3 py-1 text-xs rounded-full border font-medium ${node.completed
+                            ? 'bg-green-600/20 text-green-400 border-green-600/30'
+                            : isLocked
+                              ? 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30'
+                              : 'bg-blue-600/20 text-blue-400 border-blue-600/30'
+                            }`}
+                        >
+                          {node.completed
+                            ? '✓ Verified'
+                            : isLocked
+                              ? '🔒 Locked'
+                              : 'Ready to Start'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </ParticleCard>
               );
             })}
           </div>

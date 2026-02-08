@@ -1,11 +1,28 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
+
 import Sidebar from '@/components/Sidebar';
 import Card from '@/components/Card';
+import { ParticleCard, GlobalSpotlight } from '@/components/MagicBento';
 import { newsItems } from '@/lib/data';
 import { Newspaper, Calendar, Tag } from 'lucide-react';
 
 export default function NewsPage() {
+  const [isMobile, setIsMobile] = useState(false);
+  const newsGridRef = useRef<HTMLDivElement>(null);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const categoryColors: Record<string, string> = {
     AI: 'bg-blue-600/20 text-blue-400 border-blue-600/30',
     Tech: 'bg-green-600/20 text-green-400 border-green-600/30',
@@ -30,78 +47,103 @@ export default function NewsPage() {
           </div>
 
           {/* News Grid */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div ref={newsGridRef} className="grid md:grid-cols-2 gap-6 relative bento-section">
+            <GlobalSpotlight
+              gridRef={newsGridRef}
+              enabled={!isMobile}
+              spotlightRadius={200}
+              glowColor="59, 130, 246"
+              disableAnimations={isMobile}
+            />
             {newsItems.map((news, idx) => (
-              <Card
+              <ParticleCard
                 key={news.id}
-                hover
-                className="animate-slide-up"
-                style={{ animationDelay: `${idx * 0.1}s` }}
+                disableAnimations={isMobile}
+                particleCount={10}
+                enableTilt={false}
+                clickEffect={true}
+                enableMagnetism={true}
+                glowColor="59, 130, 246"
               >
-                {/* Image Placeholder */}
-                <div className="mb-4 h-48 bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-lg flex items-center justify-center">
-                  <Newspaper className="w-16 h-16 text-gray-600" />
-                </div>
-
-                {/* Category Badge */}
-                <div className="mb-3">
-                  <span
-                    className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full border ${categoryColors[news.category]
-                      }`}
-                  >
-                    <Tag className="w-3 h-3" />
-                    {news.category}
-                  </span>
-                </div>
-
-                {/* Title */}
-                <h3 className="text-xl font-semibold text-white mb-3 line-clamp-2">
-                  {news.title}
-                </h3>
-
-                {/* Summary */}
-                <p className="text-gray-400 text-sm mb-4 line-clamp-3">
-                  {news.summary}
-                </p>
-
-                {/* Date & Read More */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-gray-500 text-sm">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(news.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
+                <Card
+                  hover
+                  className="animate-slide-up"
+                  style={{ animationDelay: `${idx * 0.1}s` }}
+                >
+                  {/* Image Placeholder */}
+                  <div className="mb-4 h-48 bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-lg flex items-center justify-center">
+                    <Newspaper className="w-16 h-16 text-gray-600" />
                   </div>
-                  <button className="text-blue-400 hover:text-blue-300 font-medium text-sm transition-colors">
-                    Read More →
-                  </button>
-                </div>
-              </Card>
+
+                  {/* Category Badge */}
+                  <div className="mb-3">
+                    <span
+                      className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full border ${categoryColors[news.category]
+                        }`}
+                    >
+                      <Tag className="w-3 h-3" />
+                      {news.category}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-xl font-semibold text-white mb-3 line-clamp-2">
+                    {news.title}
+                  </h3>
+
+                  {/* Summary */}
+                  <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                    {news.summary}
+                  </p>
+
+                  {/* Date & Read More */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                      <Calendar className="w-4 h-4" />
+                      {new Date(news.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </div>
+                    <button className="text-blue-400 hover:text-blue-300 font-medium text-sm transition-colors">
+                      Read More →
+                    </button>
+                  </div>
+                </Card>
+              </ParticleCard>
             ))}
           </div>
 
           {/* Subscribe Section */}
           <div className="mt-12">
-            <Card className="bg-gradient-to-br from-blue-900/40 to-cyan-900/40 border-blue-500/30 text-center">
-              <h3 className="text-2xl font-bold text-white mb-3">
-                Stay Informed
-              </h3>
-              <p className="text-gray-300 mb-6">
-                Get the latest placement and tech news delivered to you
-              </p>
-              <div className="flex gap-3 max-w-md mx-auto">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-                />
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap">
-                  Subscribe
-                </button>
-              </div>
-            </Card>
+            <ParticleCard
+              disableAnimations={isMobile}
+              particleCount={8}
+              enableTilt={false}
+              clickEffect={true}
+              enableMagnetism={true}
+              glowColor="59, 130, 246"
+            >
+              <Card className="bg-gradient-to-br from-blue-900/40 to-cyan-900/40 border-blue-500/30 text-center">
+                <h3 className="text-2xl font-bold text-white mb-3">
+                  Stay Informed
+                </h3>
+                <p className="text-gray-300 mb-6">
+                  Get the latest placement and tech news delivered to you
+                </p>
+                <div className="flex gap-3 max-w-md mx-auto">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                  />
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap">
+                    Subscribe
+                  </button>
+                </div>
+              </Card>
+            </ParticleCard>
           </div>
         </div>
       </main>
