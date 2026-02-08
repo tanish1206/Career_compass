@@ -1,11 +1,13 @@
 // AI Integration for Career Compass
-// Gemini AI client and roadmap generation logic
+// Groq AI client and roadmap generation logic
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { RoadmapNode } from './data';
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Initialize Groq AI
+const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY || ''
+});
 
 // System prompt for roadmap generation
 const ROADMAP_GENERATION_PROMPT = `You are a placement preparation roadmap generator for Indian college students targeting tier-2/3 colleges.
@@ -47,12 +49,18 @@ const ROADMAP_EDIT_PROMPT = `You are a roadmap editor. Modify the existing roadm
 STRICT OUTPUT RULES:
 - Return ONLY valid JSON: {"roadmap": RoadmapNode[], "explanation": string}
 - Maintain same schema as input
-- Keep completed status unchanged
-- Update prerequisites if removing topics
+- Keep completed status unchanged (unless user asks to mark as done)
+- Update prerequisites of other nodes if a prerequisite node is removed
 - Explanation max 50 chars
 
+CRITICAL INSTRUCTIONS FOR REMOVAL:
+- If user asks to "remove", "delete", "skip", or "drop" a topic:
+  1. COMPLETELY REMOVE the node from the "roadmap" array. DO NOT just mark as completed.
+  2. Remove the deleted node's ID from any "prerequisites" arrays in other nodes.
+  3. Adjust "position" of remaining nodes to close gaps.
+
 ALLOWED MODIFICATIONS:
-- Remove topics user already knows
+- Remove topics user already knows (HARD DELETE)
 - Adjust pace (reduce/increase topics)
 - Reorder priorities
 - Add missing critical topics
@@ -61,7 +69,7 @@ ALLOWED MODIFICATIONS:
 FORBIDDEN:
 - Don't add motivational text
 - Don't change topic IDs arbitrarily
-- Don't break prerequisite chains`;
+- Don't leave "ghost" nodes (remove them entirely)`;
 
 // Validate roadmap structure
 function validateRoadmap(data: any): data is { roadmap: RoadmapNode[] } {
@@ -93,9 +101,7 @@ export async function generatePersonalizedRoadmap(profile: {
 }): Promise<RoadmapNode[]> {
     try {
         console.log('🤖 Starting AI roadmap generation with profile:', profile);
-        console.log('🔑 API Key exists:', !!process.env.GEMINI_API_KEY);
-
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+        console.log('🔑 API Key exists:', !!process.env.GROQ_API_KEY);
 
         const userPrompt = `Generate a personalized placement preparation roadmap:
 
@@ -110,13 +116,24 @@ Timeline: ${profile.timelineWeeks} weeks
 
 Prioritize weak areas. Generate realistic roadmap.`;
 
-        console.log('📤 Sending request to Gemini AI...');
-        const result = await model.generateContent(
-            ROADMAP_GENERATION_PROMPT + '\n\n' + userPrompt
-        );
+        console.log('📤 Sending request to Groq AI...');
+        const chatCompletion = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: ROADMAP_GENERATION_PROMPT
+                },
+                {
+                    role: "user",
+                    content: userPrompt
+                }
+            ],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.7,
+            max_tokens: 2000,
+        });
 
-        const response = await result.response;
-        const text = response.text();
+        const text = chatCompletion.choices[0]?.message?.content || "";
         console.log('📥 Received AI response:', text.substring(0, 200) + '...');
 
         // Clean response (remove markdown if present)
@@ -146,7 +163,14 @@ export async function editRoadmapWithAI(
         console.log('💬 Chatbot edit request:', userMessage);
         console.log('📋 Current roadmap nodes:', currentRoadmap.length);
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+        // Validate API key exists
+        if (!process.env.GROQ_API_KEY) {
+            console.error('❌ GROQ_API_KEY not found in environment');
+            throw new Error('AI service not configured. Please add GROQ_API_KEY to .env.local');
+        }
+
+        console.log('🔑 API Key exists:', !!process.env.GROQ_API_KEY);
+        console.log('🔑 API Key length:', process.env.GROQ_API_KEY.length);
 
         const userPrompt = `Current Roadmap:
 ${JSON.stringify(currentRoadmap, null, 2)}
@@ -155,26 +179,58 @@ User Request: "${userMessage}"
 
 Modify the roadmap accordingly. Return JSON with updated roadmap and brief explanation.`;
 
-        console.log('📤 Sending edit request to Gemini AI...');
-        const result = await model.generateContent(
-            ROADMAP_EDIT_PROMPT + '\n\n' + userPrompt
-        );
+        console.log('📤 Sending edit request to Groq AI...');
 
-        const response = await result.response;
-        const text = response.text();
+        let chatCompletion;
+        try {
+            chatCompletion = await groq.chat.completions.create({
+                messages: [
+                    {
+                        role: "system",
+                        content: ROADMAP_EDIT_PROMPT
+                    },
+                    {
+                        role: "user",
+                        content: userPrompt
+                    }
+                ],
+                model: "llama-3.3-70b-versatile",
+                temperature: 0.5,
+                max_tokens: 2000,
+            });
+        } catch (apiError: any) {
+            console.error('❌ Groq API call failed:', apiError);
+            if (apiError.message?.includes('API key')) {
+                throw new Error('Invalid API key. Please check your GROQ_API_KEY in .env.local');
+            }
+            if (apiError.message?.includes('quota')) {
+                throw new Error('API quota exceeded. Please check your Groq console.');
+            }
+            throw new Error(`Groq API error: ${apiError.message || 'Unknown error'}`);
+        }
+
+        const text = chatCompletion.choices[0]?.message?.content || "";
         console.log('📥 Received edit response:', text.substring(0, 200) + '...');
 
         // Clean response
         const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
-        const data = JSON.parse(cleanText);
+        let data;
+        try {
+            data = JSON.parse(cleanText);
+        } catch (parseError) {
+            console.error('❌ Failed to parse AI response:', cleanText);
+            throw new Error('AI returned invalid JSON. Please try rephrasing your request.');
+        }
 
         if (!validateRoadmap(data)) {
-            throw new Error('Invalid edit response from AI');
+            console.error('❌ Invalid roadmap structure:', data);
+            throw new Error('AI returned invalid roadmap structure. Please try again.');
         }
 
         if (!('explanation' in data) || typeof data.explanation !== 'string') {
-            throw new Error('Missing explanation in AI response');
+            console.error('❌ Missing explanation in response');
+            throw new Error('AI response missing explanation. Please try again.');
         }
 
         console.log('✅ Edit successful:', data.explanation);
@@ -182,8 +238,10 @@ Modify the roadmap accordingly. Return JSON with updated roadmap and brief expla
             roadmap: data.roadmap,
             explanation: data.explanation
         };
-    } catch (error) {
+    } catch (error: any) {
         console.error('❌ AI roadmap edit failed:', error);
+        console.error('❌ Error type:', error.constructor.name);
+        console.error('❌ Error message:', error.message);
         throw error;
     }
 }
